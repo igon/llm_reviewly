@@ -1,5 +1,9 @@
 SYSTEM_PROMPT = """
-You are an AI assistant that provides concise, Cliff Notes-style summaries of short-term rental reviews. Your task is to highlight key points with brief, clear responses that include actual quotes and capture the emotional tone of the reviews. Summarize the pros, cons, and recurring themes efficiently, ensuring users can quickly understand guest experiences. If more details are requested, provide further explanation or in-depth analysis as needed.
+You are an AI assistant that provides concise, Cliff Notes-style summaries of short-term rental reviews.
+Your role is to highlight key points with brief, clear responses that include actual quotes and capture the emotional tone of the reviews.
+Summarize the pros, cons, and recurring themes efficiently, ensuring users can quickly understand guest experiences.
+If a guest expresses a concern about a specific topic, follow up with questions to gather more details and reason about why the guest was concerned.
+Offer more details or in-depth analysis when requested.
 """
 
 STR_CONTEXT = """
@@ -116,4 +120,40 @@ Long term stays allowed - Allow stay for 28 days or more
 Self check-in
 Lockbox
 "
+"""
+
+ASSESSMENT_PROMPT = """
+### Instructions
+
+Your task is to analyze the conversation between a guest and an assistant, then generate a prioritized list of points of interest based on the guest's **most recent message**.
+
+Follow these guidelines:
+
+1. **Classify Points of Interest**:
+   - Identify a point of interest if the guest expresses a significant concern or need.
+   - Assign higher weight to points related to **safety** or **basic needs** (e.g., security, comfort).
+   - Assign lower weight to points concerning **non-essential** or **complementary needs** (e.g., amenities, preferences).
+   - Ensure no duplication of existing points. Only add new points if they provide additional, meaningful, or updated information.
+   - Break down generic concerns into more precise topics whenever possible.
+
+2. **Sort Points of Interest**:
+   - Rank points by weight, placing those with higher importance (e.g., safety, basic needs) at the top.
+
+### Output Format:
+
+{{
+    "points_of_interest_updates": [
+        {{
+            "topic": "<Specific Topic>",
+            "weight": "<Weight: Strong/Moderate/Weak>"
+        }}
+    ]
+}}
+
+### Inputs Provided:
+
+- **Most Recent Guest Message**: `{latest_message}`
+- **Conversation History**: `{history}`
+- **Existing Points of Interest**: `{existing_points_of_interest}`
+- **Current Date**: `{current_date}`
 """

@@ -2,9 +2,13 @@ import openai
 import os
 import chainlit as cl
 import asyncio
+import json
+from datetime import datetime
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
-from prompts import SYSTEM_PROMPT, STR_CONTEXT
+from prompts import SYSTEM_PROMPT, STR_CONTEXT, ASSESSMENT_PROMPT
+from guest_record import read_guest_record, write_guest_record, format_guest_record, parse_guest_record
+
 from pathlib import Path
 reviews = Path('reviews.txt').read_text()
 
@@ -28,7 +32,7 @@ ENABLE_STR_CONTEXT = True
 @traceable # Auto-trace this function
 async def start():
     # Send a welcome message to the user
-    await cl.Message(content="👋 Welcome to Reviewly! I can provide any insight from reviews of the vacation rental  listing. How can I assist you today?").send()
+    await cl.Message(content="👋 Welcome to Reviewly! I can provide any insight from reviews of the vacation rental listing. How can I assist you today?").send()
 
 
 @traceable # Auto-trace this function
@@ -39,59 +43,67 @@ def get_latest_user_message(message_history):
             return message['content']
     return None
 
-# @traceable # Auto-trace this function
-# async def assess_message(message_history):
-#     file_path = "student_record.md"
-#     markdown_content = read_student_record(file_path)
-#     parsed_record = parse_student_record(markdown_content)
+@traceable # Auto-trace this function
+async def assess_message(message_history):
+    file_path = "guest_record.md"
+    markdown_content = read_guest_record(file_path)
+    parsed_record = parse_guest_record(markdown_content)
+    print("parsed_record: \n\n", parsed_record)
 
-#     latest_message = get_latest_user_message(message_history)
+    latest_message = get_latest_user_message(message_history)
 
-#     # Remove the original prompt from the message history for assessment
-#     filtered_history = [msg for msg in message_history if msg['role'] != 'system']
+    # Remove the original prompt from the message history for assessment
+    filtered_history = [msg for msg in message_history if msg['role'] != 'system']
 
-#     # Convert message history, alerts, and knowledge to strings
-#     history_str = json.dumps(filtered_history, indent=4)
-#     alerts_str = json.dumps(parsed_record.get("Alerts", []), indent=4)
-#     knowledge_str = json.dumps(parsed_record.get("Knowledge", {}), indent=4)
-    
-#     current_date = datetime.now().strftime('%Y-%m-%d')
+    # Convert message history, alerts, and knowledge to strings
+    history_str = json.dumps(filtered_history, indent=4)
+    points_str = json.dumps(parsed_record.get("Points of Interest", {}), indent=4)
+    print("points_str: \n\n", points_str)
 
-#     # Generate the assessment prompt
-#     filled_prompt = ASSESSMENT_PROMPT.format(
-#         latest_message=latest_message,
-#         history=history_str,
-#         existing_alerts=alerts_str,
-#         existing_knowledge=knowledge_str,
-#         current_date=current_date
-#     )
-#     if ENABLE_CLASS_CONTEXT:
-#         filled_prompt += "\n" + CLASS_CONTEXT
-#     print("Filled prompt: \n\n", filled_prompt)
 
-#     response = await client.chat.completions.create(messages=[{"role": "system", "content": filled_prompt}], **gen_kwargs)
+    current_date = datetime.now().strftime('%Y-%m-%d')
 
-#     assessment_output = response.choices[0].message.content.strip()
-#     print("Assessment Output: \n\n", assessment_output)
+    # Generate the assessment prompt
+    filled_prompt = ASSESSMENT_PROMPT.format(
+        latest_message=latest_message,
+        history=history_str,
+        existing_points_of_interest=points_str,
+        current_date=current_date
+    )
+    if ENABLE_STR_CONTEXT:
+        filled_prompt += "\n" + STR_CONTEXT
+    print("Filled prompt: \n\n", filled_prompt)
 
-#     # Parse the assessment output
-#     new_alerts, knowledge_updates = parse_assessment_output(assessment_output)
+    response = await client.chat.completions.create(messages=[{"role": "system", "content": filled_prompt}], **model_kwargs)
 
-#     # Update the student record with the new alerts and knowledge updates
-#     parsed_record["Alerts"].extend(new_alerts)
-#     for update in knowledge_updates:
-#         topic = update["topic"]
-#         note = update["note"]
-#         parsed_record["Knowledge"][topic] = note
+    assessment_output = response.choices[0].message.content.strip()
+    print("Assessment Output: \n\n", assessment_output)
 
-#     # Format the updated record and write it back to the file
-#     updated_content = format_student_record(
-#         parsed_record["Student Information"],
-#         parsed_record["Alerts"],
-#         parsed_record["Knowledge"]
-#     )
-#     write_student_record(file_path, updated_content)
+    # Parse the assessment output
+    points_of_interest = parse_assessment_output(assessment_output)
 
+    # Update the guests points of interest
+    for update in points_of_interest:
+        topic = update["topic"]
+        weight = update["weight"]
+        parsed_record["Points of Interest"][topic] = weight
+
+    # Format the updated record and write it back to the file
+    updated_content = format_guest_record(
+        parsed_record["Guest Information"],
+        parsed_record["Points of Interest"]
+    )
+    write_guest_record(file_path, updated_content)
+
+@traceable # Auto-trace this function
+def parse_assessment_output(output):
+    try:
+        parsed_output = json.loads(output)
+        poi = parsed_output.get("points_of_interest_updates", [])
+        return poi
+    except json.JSONDecodeError as e:
+        print("Failed to parse assessment output:", e)
+        return [], []
 
 @cl.on_message
 @traceable # Auto-trace this function
@@ -108,7 +120,7 @@ async def on_message(message: cl.Message):
 
     message_history.append({"role": "user", "content": message.content})
 
-    # asyncio.create_task(assess_message(message_history))
+    asyncio.create_task(assess_message(message_history))
 
 
     response_message = cl.Message(content="")

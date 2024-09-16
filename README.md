@@ -58,3 +58,15 @@ Delivering a concise, Cliff Notes-style summary of short-term rental reviews for
    ```
 
 3. Open your browser and navigate to the URL displayed in the terminal.
+
+## Usage
+
+- Start a conversation with the AI by typing a message.
+- The application will process your input, update the guests points of interest, and provide a contextual response.
+- Guests records are automatically updated and stored in `guest_record.md`.
+
+## Key Components
+
+- `app.py`: Main application file containing the Chainlit setup and message handling logic.
+- `prompts.py`: Contains prompt templates for system instructions and assessments.
+- `guest_record.py`: Handles reading, writing, and formatting of guests records.
