@@ -70,3 +70,20 @@ Delivering a concise, Cliff Notes-style summary of short-term rental reviews for
 - `app.py`: Main application file containing the Chainlit setup and message handling logic.
 - `prompts.py`: Contains prompt templates for system instructions and assessments.
 - `guest_record.py`: Handles reading, writing, and formatting of guests records.
+- `eval.py`: Handles evaluation of prompt compliance.
+
+## LLM Evaluation
+
+1. **Create dataset**
+
+1. **Activate the Virtual Environment** (if not already activated):
+
+   ```sh
+   source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
+   ```
+
+1. **Run the Evaluation**:
+
+   ```sh
+   chainlit run app.py -w
+   ```
