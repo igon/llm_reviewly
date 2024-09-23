@@ -1,0 +1,23 @@
+{
+    "manifest_version": 3,
+    "name": "Airbnb Listing Parser",
+    "version": "1.0",
+    "description": "Parse and send Airbnb listings to a backend server and display details.",
+    "permissions": ["tabs", "activeTab", "storage", "scripting"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_title": "Airbnb Reviewly"
+
+    },
+    "content_scripts": [
+      {
+        "matches": ["*://www.airbnb.com/rooms/*"],
+        "js": ["content.js"]
+      }
+    ],
+    "host_permissions": ["http://localhost:8001/"]
+  }
+  

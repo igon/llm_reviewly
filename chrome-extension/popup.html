@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AirBnb Reviewly</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .tab {
+            display: none;
+        }
+        .tab.active {
+            display: block;
+        }
+        .tabs {
+            display: flex;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .tab-header {
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+        }
+        .tab-header.active {
+            background-color: #ccc;
+        }
+        iframe {
+            border: 10px solid #ccc;
+            width: 400px;
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tabs">
+        <div id="tab1-header" class="tab-header active"> Details</div>
+        <div id="tab2-header" class="tab-header">Chat</div>
+    </div>
+    <div id="tab1" class="tab active">
+        <h3>Listing Information</h3>
+        <div id="listing-details">
+            <!-- Airbnb listing details will be populated here -->
+        </div>
+        <div id="backend-response">
+            <!-- Backend recommendations will be populated here -->
+        </div>
+    </div>
+    <div id="tab2" class="tab">
+        <iframe id="backend-frame" src="http://localhost:8000" ></iframe>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
